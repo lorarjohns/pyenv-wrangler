@@ -1,0 +1,99 @@
+#!/bin/zsh
+
+# ENV_NAME={printenv | grep PYENV | tail -n 1 | awk -F/ {print $(NF)}'}
+if [[ $SHELL == "/usr/bin/zsh" ]]; then
+    source ~/.zshenv -q
+    emulate -LR bash
+fi
+
+VENV_DIR=$HOME/.pyenv/old_venvs/
+TARGET=$@
+PYENV_VERSIONS=($(pyenv versions --skip-aliases --bare | cut -d "/" -f 3))
+LOCAL_VENV=($(echo $(printenv | grep "PYENV_VIRTUAL_ENV" | awk -F/ "{print $NF}") | cut -d "/" -f 8))
+
+prompt_venv () {
+
+	while true
+	do
+    # read -p -a venv "Enter pyenv version:\n$PYENV_VERSIONS "
+    print_venvs
+    read -r "venv?Enter choice: "
+
+	    #echo [ "${PYENV_VERSIONS[(ie)venv]}" -le "${#PYENV_VERSIONS}" ] #; then
+
+        #case "$venv" in
+        #"${PYENV_VERSIONS[@]}"* )
+            TARGET="$venv"
+			printf "Processing %s.\n" $venv
+            process
+        #fi
+			break 
+            #;;
+        case "$venv" in
+        #else
+		#if ['$venv' = "q"] || ['$venv' = "Q" ] ; then
+        ["Qq"] )
+            exit 
+            ;;
+        # fi
+		# else
+        * )
+            printf "No valid version supplied.\nEnter a valid version or q to quit.\n"
+            ;;
+		# fi
+        esac
+	done
+}
+print_venvs () {
+    printf "Enter pyenv version.\nVersions available:\n"
+    printf "-------------------\n"
+    for env in ${PYENV_VERSIONS[@]};
+    do
+    printf "%s\n" $env 
+    done
+    printf "-------------------\n"
+}
+process () {
+for e in "${TARGET[@]}"; do
+	pyenv shell "$e"
+	pip list | tail +3 | awk 'BEGIN {OFS = "=="} {print $1,$2}' > "$VENV_DIR"/"$e"-requirements.txt
+	printf "\nCreated requirements file for %s.\n" $e
+done
+}
+
+get_venv () {
+
+# if explicit choice, use that.
+# todo: fix so more than just 1st in array is processed
+
+if [[ ! -z "${TARGET[*]}" ]]; then
+        printf "Processing %s." ${TARGET[@]}
+        process
+
+# if no stdin and local environment variable is set, use it.
+# todo: if .python_version is set, use that
+
+elif [[ $# -eq 0 && ! -z "${LOCAL_VENV[*]}" ]]; then
+	TARGET=("${LOCAL_VENV[#]}")
+    echo "${LOCAL_VENV[+#]}"
+    printf "Processing %s." ${TARGET[@]}
+    process
+
+# if no local python, ask the user
+elif [[ -z "${LOCAL_VENV[*]}" ]]; then
+
+	while true
+	do
+    # read -rp "Choose a venv? " ans
+    read "ans?Choose a venv? " 
+		case $ans in 
+			[yY]* ) prompt_venv
+				break;;
+			[nN]* ) exit;;
+			* )	printf "Choose y or n, please.\ny - continue\nn - quit\n";;
+		esac
+	done
+fi		
+}
+
+get_venv
