@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 
 # ENV_NAME={printenv | grep PYENV | tail -n 1 | awk -F/ {print $(NF)}'}
 if [[ $SHELL == "/usr/bin/zsh" ]]; then

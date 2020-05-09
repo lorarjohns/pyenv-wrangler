@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+[ -n "$PYENV_DEBUG" ] && set -x
+
+CURRENT_DIR="$PWD"
+
+cd
+
+if [ -z "$@" ]; then
+	find . -type d -exec test -e "{}"/".python-version" -print 2>/dev/null \;
+elif [ -n "$1" ]; then
+    	find . -user "$USER" -name ".python-version" -type f -exec grep -l $1 {} \;
+fi
+
+cd $CURRENT_DIR
